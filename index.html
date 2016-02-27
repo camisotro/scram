@@ -1,0 +1,121 @@
+<html>
+<!-- https://www.frankmitchell.org/2015/01/fisher-yates/ for the shuffling algorithm -->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="dist/css/mobile-angular-ui-hover.min.css" />
+    <link rel="stylesheet" href="dist/css/mobile-angular-ui-base.min.css" />
+    <link rel="stylesheet" href="dist/css/mobile-angular-ui-desktop.min.css" />
+    <link rel="stylesheet" href="main.css" />
+    <script src="dist/js/angular.min.js">
+    </script>
+    <script src="dist/js/angular-route.min.js">
+    </script>
+    <script src="dist/js/angular-animate.js"></script>
+    <script src="dist/js/mobile-angular-ui.min.js">
+    </script>
+    <script src="words.js"></script>
+    <script>
+        theScope = {};
+        function shuffle(array) {
+            var i = 0
+                , j = 0
+                , temp = null
+
+            for (i = array.length - 1; i > 0; i -= 1) {
+                j = Math.floor(Math.random() * (i + 1))
+                temp = array[i]
+                array[i] = array[j]
+                array[j] = temp
+            }
+        }
+        angular.module('myApp', ['mobile-angular-ui', 'ngAnimate']).controller("myCtrl", function ($scope) {
+            theScope = $scope;
+            $scope.tiles = [];
+            var classes = {
+                default: "btn btn-lg btn-primary"
+                , correct: "btn btn-lg btn-success"
+                , incorrect: "btn btn-lg btn-danger"
+                , hidden: "hidden"
+            };
+            $scope.newgame = function () {
+                var word = wordlist[Math.floor(Math.random() * wordlist.length)].toUpperCase();
+                var letters = word.split('');
+                $scope.answer = word;
+                $scope.aAnswer = word.split('');
+
+                $scope.tiles.forEach(function(e, i, a){
+                    e.class = classes.hidden;
+                });
+                lastLength = $scope.tiles.length;
+                $scope.tiles.forEach(function(e, i, a){
+                    e = {letter:"hidden text is hidden", class: classes.hidden };
+                });
+                shuffle(letters);
+                var populate = function(){
+                    $scope.tiles = [];
+                    letters.forEach(function (element, index, array) {
+                        $scope.tiles.push({
+                            letter: element, class: classes.default
+                        });
+                    });
+                    $scope.$apply();
+                };
+                setTimeout(populate, 50);
+            };
+            $scope.newgame();
+        });
+    </script>
+</head>
+
+<body ng-app="myApp" ng-controller="myCtrl">
+    <div class="section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1>Word Game!</h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-6">
+                    <a class="btn btn-block btn-info btn-lg" ng-click="newgame()">New Game</a>
+                </div>
+            </div>
+            <div class="row">
+                <h3 class="col-xs-12 ">Wrong guesses: 1</h3><br>
+                <h3 class="col-xs-12 ">Answer: {{answer}}</h3>
+            </div>
+            <div class="row ">
+                <!--
+                <div class="col-xs-2 ">
+                    <a class="btn btn-lg btn-success ">
+              I
+            </a>
+                </div>
+                <div class="col-xs-2 ">
+                    <a class="btn btn-lg btn-primary ">P</a>
+                </div>
+                <div class="col-xs-2 ">
+                    <a class="btn btn-lg btn-success ">M</a>
+                </div>
+                <div class="col-xs-2 ">
+                    <a class="btn btn-danger btn-lg ">L</a>
+                </div>
+                <div class="col-xs-2 ">
+                    <a class="btn btn-lg btn-primary ">E</a>
+                </div>
+                <div class="col-xs-2 ">
+                    <a class="btn btn-lg btn-success ">S</a>
+                </div>
+-->
+                <div class="col-xs-2 repeated-item" ng-repeat="tile in tiles">
+                    <a class="{{tile.class}}">{{tile.letter}}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
