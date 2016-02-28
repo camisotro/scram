@@ -4,7 +4,7 @@
 
 .col-xs-2 .btn-lg {
     margin-bottom: 1em;
-    min-width: 3em;
+    min-width: 2.5em;
 }
 
 /*
@@ -77,3 +77,9 @@
   from { opacity:1; }
   to { opacity:0; }
 }
+
+.no-gutter > [class*='col-'] {
+    padding-right:0;
+    padding-left:0;
+}
+

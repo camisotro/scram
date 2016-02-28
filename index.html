@@ -29,39 +29,110 @@
                 array[j] = temp
             }
         }
-        angular.module('myApp', ['mobile-angular-ui', 'ngAnimate']).controller("myCtrl", function ($scope) {
+        angular.module('myApp', ['mobile-angular-ui', 'ngAnimate']).controller("myCtrl", function ($scope, $timeout) {
             theScope = $scope;
+            $scope.wrong = 0;
             $scope.tiles = [];
+            $scope.rights = [];
             var classes = {
                 default: "btn btn-lg btn-primary"
                 , correct: "btn btn-lg btn-success"
                 , incorrect: "btn btn-lg btn-danger"
                 , hidden: "hidden"
             };
+            $scope.already = function() {
+                var tile = this;
+                tile.letter="!!";
+                $scope.userMessage = "You picked that already! Try again.";
+                setTimeout(function(){
+                    tile.letter=tile.l;
+                    $scope.$apply();
+                }, 500);
+            };
+            $scope.nil = function() {};
+            $scope.handler = function() {
+                // replace the handler so it won't run again
+                this.click = $scope.already;
+                if (this.letter == $scope.aAnswer[0])
+                {
+                    // turn green!
+                    this.class = classes.correct;
+                    // from now on look for the next letter of the word
+                    $scope.aAnswer.shift();
+
+                    // revert the "wrongs" from red and empty the array of them
+                    $scope.wrongs.forEach(function(e, i, a){
+                        e.class = classes.default;
+                        e.click = $scope.handler;
+                    });
+                    $scope.wrongs = [];
+                    var tile = this;
+                    if ($scope.aAnswer.length < 1)
+                    {
+                        $scope.userMessage = "Well done — You win!";
+                        $scope.rights.forEach(function(e, i, a){
+                            e.click = $scope.nil;
+                        });
+                        $scope.tiles[0].click = $scope.nil;
+                    }
+                    else
+                    {
+                        $scope.userMessage = "Great! What's the next letter?";
+                    }
+                    // wait and then move the tile to the beginning
+                    $timeout(function(){
+                        $scope.tiles.splice($scope.tiles.indexOf(tile), 1);
+                        $scope.rights.push(tile);
+                    }, 500);
+                }
+                else
+                {
+                    this.class = classes.incorrect;
+                    $scope.userMessage = "Whoops! Not that letter.";
+                    $scope.wrongs.push(this);
+                    $scope.wrong++;
+                }
+            };
             $scope.newgame = function () {
                 var word = wordlist[Math.floor(Math.random() * wordlist.length)].toUpperCase();
                 var letters = word.split('');
+                $scope.wrong = 0;
+                $scope.wrongs = [];
                 $scope.answer = word;
+                $scope.userMessage = "Guess the first letter!";
                 $scope.aAnswer = word.split('');
-
+                $scope.rights.forEach(function(e, i, a){
+                    e.class = classes.hidden;
+                });
                 $scope.tiles.forEach(function(e, i, a){
                     e.class = classes.hidden;
                 });
-                lastLength = $scope.tiles.length;
+                $scope.rights.forEach(function(e, i, a){
+                    e = {letter:"hidden text is hidden", class: classes.hidden };
+                });
                 $scope.tiles.forEach(function(e, i, a){
                     e = {letter:"hidden text is hidden", class: classes.hidden };
                 });
                 shuffle(letters);
+
+                // had to do some silly timeout-setting here
+                // to ensure old tiles are all gone before new ones go in
                 var populate = function(){
                     $scope.tiles = [];
                     letters.forEach(function (element, index, array) {
                         $scope.tiles.push({
-                            letter: element, class: classes.default
+                            letter: element, class: classes.default, click: $scope.handler, l: element
                         });
                     });
                     $scope.$apply();
                 };
-                setTimeout(populate, 50);
+
+                var clearout = function(){
+                    $scope.rights = [];
+                    $scope.$apply();
+                    $timeout(populate);
+                };
+                $timeout(clearout, 250, false);
             };
             $scope.newgame();
         });
@@ -78,38 +149,23 @@
             </div>
             <div class="row">
                 <div class="col-xs-6">
-                    <a class="btn btn-block btn-info btn-lg" ng-click="newgame()">New Game</a>
+                    <p><a class="btn btn-info btn-lg" ng-click="newgame()">&nbsp;New Game&nbsp;</a></p>
                 </div>
             </div>
             <div class="row">
-                <h3 class="col-xs-12 ">Wrong guesses: 1</h3><br>
-                <h3 class="col-xs-12 ">Answer: {{answer}}</h3>
+                <h3 class="col-xs-12 ">Wrong guesses: {{wrong}}</h3>
+                <p>&nbsp;</p>
+                <h4 class="col-xs-12 ">{{userMessage}}</h3>
+                <p>&nbsp;</p>
             </div>
-            <div class="row ">
-                <!--
-                <div class="col-xs-2 ">
-                    <a class="btn btn-lg btn-success ">
-              I
-            </a>
+            <div class="row no-gutter text-center">
+                <div class="col-xs-2 repeated-item" ng-repeat="tile in rights">
+                    <a class="{{tile.class}}" ng-click="tile.click()">{{tile.letter}}</a>
                 </div>
-                <div class="col-xs-2 ">
-                    <a class="btn btn-lg btn-primary ">P</a>
-                </div>
-                <div class="col-xs-2 ">
-                    <a class="btn btn-lg btn-success ">M</a>
-                </div>
-                <div class="col-xs-2 ">
-                    <a class="btn btn-danger btn-lg ">L</a>
-                </div>
-                <div class="col-xs-2 ">
-                    <a class="btn btn-lg btn-primary ">E</a>
-                </div>
-                <div class="col-xs-2 ">
-                    <a class="btn btn-lg btn-success ">S</a>
-                </div>
--->
+            </div>
+            <div class="row no-gutter text-center">
                 <div class="col-xs-2 repeated-item" ng-repeat="tile in tiles">
-                    <a class="{{tile.class}}">{{tile.letter}}</a>
+                    <a class="{{tile.class}}" ng-click="tile.click()">{{tile.letter}}</a>
                 </div>
             </div>
         </div>
