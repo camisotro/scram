@@ -83,3 +83,11 @@
     padding-left:0;
 }
 
+body, .section {
+    background-color: #eee9ee;
+}
+
+
+.scrollable {
+    overflow: auto;
+}
