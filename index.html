@@ -30,107 +30,123 @@
             }
         }
         angular.module('myApp', ['mobile-angular-ui', 'ngAnimate']).controller("myCtrl", function ($scope, $timeout) {
+            gameJSON = localStorage.getItem("gameState") || '{"initialized": false}';
+            oGame =  JSON.parse(gameJSON);
+
+            // fix broken links to wrong tiles
+            oGame.wrongs = oGame.wrongs || [];
+            oGame.wrongs.forEach(function(e, i, a){
+                var linktiles = oGame.tiles.filter((item) => { return item['$$hashKey'] == e['$$hashKey'] } );
+                oGame.wrongs[i] = linktiles[0] || e;
+            });
+
+            $scope.game =  oGame;
             theScope = $scope;
             sWins = localStorage.getItem("pastWins") || "[]";
-            $scope.wins = JSON.parse(sWins);
-            $scope.wrong = 0;
-            $scope.tiles = [];
-            $scope.rights = [];
+            $scope.game.wins = JSON.parse(sWins);
+
             var classes = {
                 default: "btn btn-lg btn-primary"
                 , correct: "btn btn-lg btn-success"
                 , incorrect: "btn btn-lg btn-danger"
                 , hidden: "hidden"
             };
-            $scope.already = function() {
-                var tile = this;
+
+            $scope.already = function(tile) {
                 tile.letter="!!";
-                $scope.userMessage = "You picked that already! Try again.";
+                $scope.game.userMessage = "You picked that already! Try again.";
                 setTimeout(function(){
                     tile.letter=tile.l;
                     $scope.$apply();
                 }, 500);
             };
-            $scope.nil = function() {};
-            $scope.handler = function() {
+            $scope.nil = function(tile) {};
+            $scope.mainHandler = function(tile) {
                 // replace the handler so it won't run again
-                this.click = $scope.already;
-                if (this.letter == $scope.aAnswer[0])
+                tile.click = 'already';
+                if (tile.letter == $scope.game.aAnswer[0])
                 {
                     // turn green!
-                    this.class = classes.correct;
-                    $scope.score += 100;
+                    tile.class = classes.correct;
+                    $scope.game.score += 100;
                     // from now on look for the next letter of the word
-                    $scope.aAnswer.shift();
+                    $scope.game.aAnswer.shift();
 
                     // revert the "wrongs" from red and empty the array of them
-                    $scope.wrongs.forEach(function(e, i, a){
+                    $scope.game.wrongs.forEach(function(e, i, a){
                         e.class = classes.default;
-                        e.click = $scope.handler;
+                        e.click = 'mainHandler';
                     });
-                    $scope.wrongs = [];
-                    var tile = this;
-                    if ($scope.aAnswer.length < 1)
+                    $scope.game.wrongs = [];
+                    if ($scope.game.aAnswer.length < 1)
                     {
-                        $scope.userMessage = "Well done — You win!";
-                        $scope.rights.forEach(function(e, i, a){
-                            e.click = $scope.nil;
+                        // Game won!!
+                        $scope.game.userMessage = "Well done — You win!";
+                        $scope.game.rights.forEach(function(e, i, a){
+                            e.click = 'nil';
                         });
-                        $scope.tiles[0].click = $scope.nil;
-                        $scope.wins.push($scope.rawAnswer);
-                        localStorage.setItem("pastWins", JSON.stringify($scope.wins));
+                        $scope.game.tiles[0].click = $scope.nil;
+                        $scope.game.wins.push($scope.game.rawAnswer);
+                        localStorage.setItem("pastWins", JSON.stringify($scope.game.wins));
+                        // flip the initialization bit so that a returning user gets a new game
+                        $scope.game.initialized = false;
                     }
                     else
                     {
-                        $scope.userMessage = "Great! What's the next letter?";
+                        $scope.game.userMessage = "Great! What's the next letter?";
                     }
                     // wait and then move the tile to the beginning
                     $timeout(function(){
-                        $scope.tiles.splice($scope.tiles.indexOf(tile), 1);
-                        $scope.rights.push(tile);
+                        $scope.game.tiles.splice($scope.game.tiles.indexOf(tile), 1);
+                        $scope.game.rights.push(tile);
+                        localStorage.setItem('gameState', JSON.stringify($scope.game));
                     }, 500);
                 }
                 else
                 {
-                    this.class = classes.incorrect;
-                    $scope.userMessage = "Whoops! Not that letter.";
-                    $scope.wrongs.push(this);
-                    $scope.wrong++;
-                    $scope.score -= 25;
+                    tile.class = classes.incorrect;
+                    $scope.game.userMessage = "Whoops! Not that letter.";
+                    $scope.game.wrongs.push(tile);
+                    $scope.game.wrong++;
+                    $scope.game.score -= 25;
+                    localStorage.setItem('gameState', JSON.stringify($scope.game));
                 }
             };
+            $scope.handler = function(tile){
+                $scope[tile.click](tile);
+            }
             $scope.newgame = function () {
                 // filter for words not yet won
                 var validList = wordlist.filter((item) => {
-                    return !(new Set($scope.wins)).has(item);
+                    return !(new Set($scope.game.wins)).has(item);
                 });
                 // if empty, reset
                 if (validList.length == 0)
                 {
                     validList = wordlist;
                     localStorage.setItem("pastWins", "[]");
-                    $scope.wins = [];
+                    $scope.game.wins = [];
                 }
                 var thisWord = validList[Math.floor(Math.random() * validList.length)];
                 var word = thisWord.toUpperCase();
                 var letters = word.split('');
-                $scope.score = 0;
-                $scope.wrong = 0;
-                $scope.wrongs = [];
-                $scope.rawAnswer = thisWord;
-                $scope.answer = word;
-                $scope.userMessage = "Guess the first letter!";
-                $scope.aAnswer = word.split('');
-                $scope.rights.forEach(function(e, i, a){
+                $scope.game.score = 0;
+                $scope.game.wrong = 0;
+                $scope.game.wrongs = [];
+                $scope.game.rawAnswer = thisWord;
+                $scope.game.answer = word;
+                $scope.game.userMessage = "Guess the first letter!";
+                $scope.game.aAnswer = word.split('');
+                $scope.game.rights.forEach(function(e, i, a){
                     e.class = classes.hidden;
                 });
-                $scope.tiles.forEach(function(e, i, a){
+                $scope.game.tiles.forEach(function(e, i, a){
                     e.class = classes.hidden;
                 });
-                $scope.rights.forEach(function(e, i, a){
+                $scope.game.rights.forEach(function(e, i, a){
                     e = {letter:"hidden text is hidden", class: classes.hidden };
                 });
-                $scope.tiles.forEach(function(e, i, a){
+                $scope.game.tiles.forEach(function(e, i, a){
                     e = {letter:"hidden text is hidden", class: classes.hidden };
                 });
                 shuffle(letters);
@@ -138,23 +154,31 @@
                 // had to do some silly timeout-setting here
                 // to ensure old tiles are all gone before new ones go in
                 var populate = function(){
-                    $scope.tiles = [];
+                    $scope.game.tiles = [];
                     letters.forEach(function (element, index, array) {
-                        $scope.tiles.push({
-                            letter: element, class: classes.default, click: $scope.handler, l: element
+                        $scope.game.tiles.push({
+                            letter: element, class: classes.default, click: 'mainHandler', l: element
                         });
                     });
                     $scope.$apply();
+                    localStorage.setItem('gameState', JSON.stringify($scope.game));
                 };
 
                 var clearout = function(){
-                    $scope.rights = [];
+                    $scope.game.rights = [];
                     $scope.$apply();
                     $timeout(populate);
                 };
                 $timeout(clearout, 250, false);
             };
-            $scope.newgame();
+            if (!$scope.game.initialized)
+            {
+                $scope.game.wrong = 0;
+                $scope.game.tiles = [];
+                $scope.game.rights = [];
+                $scope.game.initialized = true;
+                $scope.newgame();
+            }
         });
     </script>
 </head>
@@ -172,22 +196,22 @@
                     <p><a class="btn btn-info btn-lg" ng-click="newgame()">&nbsp;New Game&nbsp;</a></p>
                 </div>
                 <div class="col-xs-6">
-                    <h3>Score: {{score}}</h3>
+                    <h3>Score: {{game.score}}</h3>
                 </div>
             </div>
             <div class="row">
-                <h3 class="col-xs-12 ">Wrong guesses: {{wrong}}</h3>
+                <h3 class="col-xs-12 ">Wrong guesses: {{game.wrong}}</h3>
                 <p>&nbsp;</p>
-                <h4 class="col-xs-12 ">{{userMessage}}</h3>
+                <h4 class="col-xs-12 ">{{game.userMessage}}</h3>
             </div>
             <div class="row no-gutter text-center">
-                <div class="col-xs-2 repeated-item" ng-repeat="tile in rights">
-                    <a class="{{tile.class}}" ng-click="tile.click()">{{tile.letter}}</a>
+                <div class="col-xs-2 repeated-item" ng-repeat="tile in game.rights">
+                    <a class="{{tile.class}}" ng-click="handler(tile)">{{tile.letter}}</a>
                 </div>
             </div>
             <div class="row no-gutter text-center">
-                <div class="col-xs-2 repeated-item" ng-repeat="tile in tiles">
-                    <a class="{{tile.class}}" ng-click="tile.click()">{{tile.letter}}</a>
+                <div class="col-xs-2 repeated-item" ng-repeat="tile in game.tiles">
+                    <a class="{{tile.class}}" ng-click="handler(tile)">{{tile.letter}}</a>
                 </div>
             </div>
         </div>
