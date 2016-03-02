@@ -36,7 +36,7 @@
             // fix broken links to wrong tiles
             oGame.wrongs = oGame.wrongs || [];
             oGame.wrongs.forEach(function(e, i, a){
-                var linktiles = oGame.tiles.filter((item) => { return item['$$hashKey'] == e['$$hashKey'] } );
+                var linktiles = oGame.tiles.filter(function(item) { return item['$$hashKey'] == e['$$hashKey'] } );
                 oGame.wrongs[i] = linktiles[0] || e;
             });
 
@@ -117,8 +117,8 @@
             }
             $scope.newgame = function () {
                 // filter for words not yet won
-                var validList = wordlist.filter((item) => {
-                    return !(new Set($scope.game.wins)).has(item);
+                var validList = wordlist.filter(function(item){
+                    return ($scope.game.wins.indexOf(item) == -1);
                 });
                 // if empty, reset
                 if (validList.length == 0)
