@@ -30,7 +30,7 @@
             }
         }
         angular.module('myApp', ['mobile-angular-ui', 'ngAnimate']).controller("myCtrl", function ($scope, $timeout) {
-            gameJSON = localStorage.getItem("gameState") || '{"initialized": false}';
+            gameJSON = window.localStorage.getItem("gameState") || '{"initialized": false}';
             oGame =  JSON.parse(gameJSON);
 
             // fix broken links to wrong tiles
@@ -42,7 +42,7 @@
 
             $scope.game =  oGame;
             theScope = $scope;
-            sWins = localStorage.getItem("pastWins") || "[]";
+            sWins = window.localStorage.getItem("pastWins") || "[]";
             $scope.game.wins = JSON.parse(sWins);
             $scope.yesPoints = 100;
             $scope.noPoints = 25;
@@ -98,7 +98,7 @@
                         });
                         $scope.game.tiles[0].click = $scope.nil;
                         $scope.game.wins.push($scope.game.rawAnswer);
-                        localStorage.setItem("pastWins", JSON.stringify($scope.game.wins));
+                        window.localStorage.setItem("pastWins", JSON.stringify($scope.game.wins));
                         // flip the initialization bit so that a returning user gets a new game
                         $scope.game.initialized = false;
                     }
@@ -110,7 +110,7 @@
                     $timeout(function(){
                         $scope.game.tiles.splice($scope.game.tiles.indexOf(tile), 1);
                         $scope.game.rights.push(tile);
-                        localStorage.setItem('gameState', JSON.stringify($scope.game));
+                        window.localStorage.setItem('gameState', JSON.stringify($scope.game));
                     }, 500);
                 }
                 else
@@ -120,7 +120,7 @@
                     $scope.game.wrongs.push(tile);
                     $scope.game.wrong++;
                     $scope.game.score -= 25 * $scope.game.wrongs.length;
-                    localStorage.setItem('gameState', JSON.stringify($scope.game));
+                    window.localStorage.setItem('gameState', JSON.stringify($scope.game));
                 }
             };
             $scope.handler = function(tile){
@@ -135,7 +135,7 @@
                 if (validList.length == 0)
                 {
                     validList = wordlist;
-                    localStorage.setItem("pastWins", "[]");
+                    window.localStorage.setItem("pastWins", "[]");
                     $scope.game.wins = [];
                 }
                 var thisWord = validList[Math.floor(Math.random() * validList.length)];
@@ -172,7 +172,7 @@
                         });
                     });
                     $scope.$apply();
-                    localStorage.setItem('gameState', JSON.stringify($scope.game));
+                    window.localStorage.setItem('gameState', JSON.stringify($scope.game));
                 };
 
                 var clearout = function(){
