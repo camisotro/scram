@@ -44,6 +44,9 @@
             theScope = $scope;
             sWins = localStorage.getItem("pastWins") || "[]";
             $scope.game.wins = JSON.parse(sWins);
+            $scope.yesPoints = 100;
+            $scope.noPoints = 25;
+            $scope.game.gamesWon = $scope.game.gamesWon || 0;
 
             var classes = {
                 default: "btn btn-lg btn-primary"
@@ -68,7 +71,7 @@
                 {
                     // turn green!
                     tile.class = classes.correct;
-                    $scope.game.score += 100;
+                    $scope.game.score += $scope.yesPoints;
                     // from now on look for the next letter of the word
                     $scope.game.aAnswer.shift();
 
@@ -80,8 +83,16 @@
                     $scope.game.wrongs = [];
                     if ($scope.game.aAnswer.length < 1)
                     {
-                        // Game won!!
-                        $scope.game.userMessage = "Well done — You win!";
+                        // Game finished!!
+                        if (($scope.game.score > 0))
+                        {
+                            $scope.game.userMessage =  "Well done — You win!";
+                            $scope.game.gamesWon += 1;
+                        }
+                        else
+                        {
+                            $scope.game.userMessage = "Better score next time?";
+                        }
                         $scope.game.rights.forEach(function(e, i, a){
                             e.click = 'nil';
                         });
@@ -108,7 +119,7 @@
                     $scope.game.userMessage = "Whoops! Not that letter.";
                     $scope.game.wrongs.push(tile);
                     $scope.game.wrong++;
-                    $scope.game.score -= 25;
+                    $scope.game.score -= 25 * $scope.game.wrongs.length;
                     localStorage.setItem('gameState', JSON.stringify($scope.game));
                 }
             };
@@ -187,8 +198,11 @@
     <div class="section">
         <div class="container">
             <div class="row">
-                <div class="col-md-12">
-                    <h1>Word Game!</h1>
+                <div class="col-xs-6">
+                    <h1>SCRAM!</h1>
+                </div>
+                <div class="col-xs-6">
+                    <h3>Wins: {{game.gamesWon}}</h3>
                 </div>
             </div>
             <div class="row">
