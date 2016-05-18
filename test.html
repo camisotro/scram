@@ -17,7 +17,7 @@
         theScope = {};
 
         angular.module('myApp', ['mobile-angular-ui']).controller("myCtrl", function ($scope, $timeout) {
-          $scope.thing = "hi!";
+          $scope.alerts = {'Larry', 'Curly', 'Moe'};
 
         });
     </script>
@@ -29,7 +29,7 @@
             <div class="row">
                 <div class="col-xs-12">
                     <h1>Hello!</h1>
-                    <p>{{thing}}</p>
+                    <div ng-repeat="alert in alerts">{{alert}}</div>
                 </div>
             </div>
 
