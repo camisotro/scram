@@ -17,6 +17,7 @@
         theScope = {};
 
         angular.module('myApp', ['mobile-angular-ui']).controller("myCtrl", function ($scope, $timeout) {
+          theScope = $scope;
           $scope.alerts = ['Larry', 'Curly', 'Moe'];
           $scope.addMessage = function(){
               $scope.alerts.push($scope.formMessage);
